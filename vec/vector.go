@@ -79,18 +79,15 @@ func (vs *VectorSpace) FindNearest(v Vector, results int) int {
 
 // Write serializes the VectorSpace to a searchable binary format
 func (vs *VectorSpace) Write(w io.Writer) error {
-	// Get all of the offsets for the key data so we know the total size
-	// of the metadata/key section
-	offsets := make([]uint64, len(vs.slice))
-	var cur uint64
-	for i, v := range vs.slice {
-		offsets[i] = cur
-		cur += uint64(len(v.key))
+	// Get the total length of the leys
+	var keySize uint64
+	for _, v := range vs.slice {
+		keySize += uint64(len(v.key))
 	}
 
 	// Metadata section
 	// Write the length and dimension of the VectorSpace
-	err := binary.Write(w, binary.NativeEndian, cur)
+	err := binary.Write(w, binary.NativeEndian, keySize)
 	if err != nil {
 		return err
 	}
@@ -113,19 +110,15 @@ func (vs *VectorSpace) Write(w io.Writer) error {
 			return err
 		}
 	}
-	// // Write vector data with offsets
-	// for i, vec := range vs.slice {
-	// 	for _, val := range vec.values {
-	// 		err = binary.Write(w, binary.NativeEndian, val)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	}
-	// 	err = binary.Write(w, binary.NativeEndian, offsets[i])
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	// Write vector data
+	for _, vec := range vs.slice {
+		for _, val := range vec.values {
+			err = binary.Write(w, binary.NativeEndian, val)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -154,8 +147,7 @@ func Read(r io.Reader) (*VectorSpace, error) {
 	}
 
 	// Read key data
-	i := 0
-	for i < vs.Len() {
+	for i := range vs.slice {
 		var keyLen uint64
 		err = binary.Read(r, binary.NativeEndian, &keyLen)
 		if err != nil {
@@ -167,22 +159,22 @@ func Read(r io.Reader) (*VectorSpace, error) {
 			return nil, err
 		}
 		vs.slice[i].key = string(key)
-		i++
+
+		// Initialize values
+		vs.slice[i].values = make([]float32, dim)
 	}
-	// pos := binary.MaxVarintLen64 * 3
-	// for pos < int(mdSize) {
-	// 	var keyLen uint64
-	// 	err := binary.Read(r, binary.NativeEndian, &keyLen)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	fmt.Println("keyLen", keyLen)
-	// 	pos += binary.MaxVarintLen64
-	// 	key := make([]byte, keyLen)
-	// 	n, err := r.Read(key)
-	// 	pos += n
-	// 	fmt.Println(string(key))
-	// }
+
+	// Read vector data
+	for i := range vs.slice {
+		for j := range vs.slice[i].values {
+			var val float32
+			err = binary.Read(r, binary.NativeEndian, &val)
+			if err != nil {
+				return nil, err
+			}
+			vs.slice[i].values[j] = val
+		}
+	}
 
 	return vs, nil
 }

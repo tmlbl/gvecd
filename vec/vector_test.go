@@ -85,9 +85,20 @@ func TestWriteVectorSpace(t *testing.T) {
 		t.Errorf("misread size")
 	}
 
+	// Check that keys match
 	for i := range vs.slice {
 		if vs.slice[i].key != nvs.slice[i].key {
 			t.Errorf("misread key: %s != %s", vs.slice[i].key, nvs.slice[i].key)
+		}
+	}
+
+	// Check that values match
+	for i := range vs.slice {
+		for j, v := range vs.slice[i].values {
+			if nvs.slice[i].values[j] != v {
+				t.Errorf("misread value at (%d, %d): %f != %f",
+					i, j, v, nvs.slice[i].values[j])
+			}
 		}
 	}
 }
