@@ -13,3 +13,10 @@ searches can be performed on many blocks simultaneously.
 Is this good? Does it perform as well as other solutions? It seems fast.
 
 I think it has potential.
+
+# TODO
+
+* Search within files
+* More flexible benchmarking
+* Define HTTP API
+* Explore generics for Vector and VectorSpace
