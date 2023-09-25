@@ -7,6 +7,14 @@ type VectorSpace interface {
 	Get(i int) Vector
 }
 
+func abs(x float32) float32 {
+	if x < 0 {
+		return x - (2 * x)
+	} else {
+		return x
+	}
+}
+
 // Search is a simple binary search on the sorted VectorSpace in memory.
 // It returns the (usually exact) index of the nearest point.
 func Search(vs VectorSpace, v Vector) int {

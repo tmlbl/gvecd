@@ -2,15 +2,14 @@ package vec
 
 import (
 	"fmt"
-	"math/rand"
 	"sort"
 	"testing"
 	"time"
 )
 
 func TestSearchVectorSpace(t *testing.T) {
-	n := uint64(100000)
-	dim := uint64(30)
+	n := uint64(100_000)
+	dim := uint64(300)
 	vs := randomVectorSpace(n, dim)
 
 	start := time.Now()
@@ -37,10 +36,24 @@ func TestSearchVectorSpace(t *testing.T) {
 		dist = d
 	}
 
+	// Create a new random point to search for
+	needle := Vector{
+		key:    "needle",
+		values: randomValues(300),
+	}
 	start = time.Now()
-	needle := vs.slice[rand.Intn(len(vs.slice))]
 	i := Search(vs, needle)
 	fmt.Println("found nearest in", time.Since(start))
+	resultDist := needle.distance(vs.slice[i])
 	fmt.Println("distance between", needle.key, "and", vs.slice[i].key,
-		"is", needle.distance(vs.slice[i]))
+		"is", resultDist)
+
+	// Confirm this is the nearest match
+	for i, v := range vs.slice {
+		dist := needle.distance(v)
+		if abs(dist) < resultDist {
+			t.Error(fmt.Errorf("result distance is %f but %d has distance of %f",
+				resultDist, i, dist))
+		}
+	}
 }
